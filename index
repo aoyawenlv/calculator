@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Final Score Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      background-color: #f7f9fb;
+    }
+    .container {
+      display: flex;
+      gap: 40px;
+    }
+    .input-panel, .output-panel {
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .input-panel {
+      flex: 1;
+    }
+    .output-panel {
+      flex: 1;
+      font-size: 1.5em;
+    }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    input[type=range] {
+      width: 100%;
+      margin-top: 5px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .radio-option {
+      padding: 5px 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .radio-option input[type="radio"] {
+      display: none;
+    }
+    .radio-option.active {
+      background-color: #e6f0ff;
+      border-color: #4d90fe;
+      font-weight: bold;
+      color: #0047ab;
+    }
+    .steps-panel {
+      margin-top: 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 1em;
+    }
+    .steps-panel h3 {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="input-panel">
+      <h2>Input Parameters</h2>
+
+      <label>Age: <span id="ageValue">1</span></label>
+      <input type="range" id="age" min="1" max="100" value="1">
+
+      <label>Smoking:</label>
+      <div class="radio-group" id="smokeGroup">
+        <label class="radio-option active"><input type="radio" name="smoke" value="1" checked>Yes</label>
+        <label class="radio-option"><input type="radio" name="smoke" value="0">No</label>
+      </div>
+
+      <label>Type of ETT:</label>
+      <div class="radio-group" id="ettGroup">
+        <label class="radio-option active"><input type="radio" name="ett" value="0" checked>SLET</label>
+        <label class="radio-option"><input type="radio" name="ett" value="1">DLET</label>
+      </div>
+
+      <label>Continuous Anesthesia:</label>
+      <div class="radio-group" id="anesthesiaGroup">
+        <label class="radio-option active"><input type="radio" name="anesthesia" value="0" checked>TIIA</label>
+        <label class="radio-option"><input type="radio" name="anesthesia" value="1">CIIA</label>
+      </div>
+
+      <label>Vasoactive Drug Usage:</label>
+      <div class="radio-group" id="vasoactiveGroup">
+        <label class="radio-option active"><input type="radio" name="vasoactive" value="0" checked>Yes</label>
+        <label class="radio-option"><input type="radio" name="vasoactive" value="1">No</label>
+      </div>
+    </div>
+
+    <div class="output-panel">
+      <h2>Final Score:</h2>
+      <p id="finalScore">Waiting for input...</p>
+    </div>
+  </div>
+
+  <div class="steps-panel">
+    <h3>Calculation Steps:</h3>
+    <pre id="stepsOutput">Waiting for input...</pre>
+  </div>
+
+  <script>
+    const ageSlider = document.getElementById('age');
+    const ageValue = document.getElementById('ageValue');
+    const output = document.getElementById('finalScore');
+    const stepsOutput = document.getElementById('stepsOutput');
+
+    function getRadioValue(name) {
+      const radios = document.getElementsByName(name);
+      for (let radio of radios) {
+        if (radio.checked) return parseInt(radio.value);
+      }
+      return 0;
+    }
+
+    function calculateScore() {
+      const X2 = parseInt(ageSlider.value);
+      const X7 = getRadioValue('smoke');
+      const X32 = getRadioValue('ett');
+      const X33 = getRadioValue('anesthesia');
+      const X34 = getRadioValue('vasoactive');
+
+      const step1 = -2.67247;
+      const step2 = 0.02335 * X2;
+      const step3 = 0.78429 * X7;
+      const step4 = -0.67346 * X32;
+      const step5 = 0.69059 * X33;
+      const step6 = 0.48074 * X34;
+
+      const score = step1 + step2 + step3 + step4 + step5 + step6;
+      output.textContent = score.toFixed(5);
+
+      const explanation = `
+-2.67247
++ 0.02335 × ${X2} = ${step2.toFixed(5)}
++ 0.78429 × ${X7} = ${step3.toFixed(5)}
+- 0.67346 × ${X32} = ${step4.toFixed(5)}
++ 0.69059 × ${X33} = ${step5.toFixed(5)}
++ 0.48074 × ${X34} = ${step6.toFixed(5)}
+= ${score.toFixed(5)}
+`;
+      stepsOutput.textContent = explanation.trim();
+    }
+
+    function setupRadioGroup(groupId) {
+      const group = document.getElementById(groupId);
+      const labels = group.querySelectorAll('.radio-option');
+      labels.forEach(label => {
+        label.addEventListener('click', () => {
+          labels.forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+          label.querySelector('input').checked = true;
+          calculateScore();
+        });
+      });
+    }
+
+    ageSlider.addEventListener('input', () => {
+      ageValue.textContent = ageSlider.value;
+      calculateScore();
+    });
+
+    ['smokeGroup', 'ettGroup', 'anesthesiaGroup', 'vasoactiveGroup'].forEach(setupRadioGroup);
+
+    calculateScore();
+  </script>
+
+</body>
+</html>
