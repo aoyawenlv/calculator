@@ -161,26 +161,22 @@
       const X33 = getRadioValue('anesthesia');
       const X34 = getRadioValue('vasoactive');
 
-      const step1 = -2.67247;
-      const step2 = 0.02335 * X2;
-      const step3 = 0.78429 * X7;
-      const step4 = -0.67346 * X32;
-      const step5 = 0.69059 * X33;
-      const step6 = 0.48074 * X34;
+      const logitX48 = -2.67247 + 0.02335 * X2 + 0.78429 * X7 - 0.67346 * X32 + 0.69059 * X33 + 0.48074 * X34;
+      const X48 = 1 / (1 + Math.exp(-logitX48));
 
-      const score = step1 + step2 + step3 + step4 + step5 + step6;
-      const percentage = Math.max(0, score * 100).toFixed(2) + '%';
-      output.textContent = percentage;
+      output.textContent = X48.toFixed(5);
 
       const explanation = `
--2.67247
-+ 0.02335 × ${X2} = ${step2.toFixed(5)}
-+ 0.78429 × ${X7} = ${step3.toFixed(5)}
-- 0.67346 × ${X32} = ${step4.toFixed(5)}
-+ 0.69059 × ${X33} = ${step5.toFixed(5)}
-+ 0.48074 × ${X34} = ${step6.toFixed(5)}
-= ${score.toFixed(5)}
-× 100 = ${percentage}`;
+logit(X48) = -2.67247
++ 0.02335 × ${X2} = ${(0.02335 * X2).toFixed(5)}
++ 0.78429 × ${X7} = ${(0.78429 * X7).toFixed(5)}
+- 0.67346 × ${X32} = ${(-0.67346 * X32).toFixed(5)}
++ 0.69059 × ${X33} = ${(0.69059 * X33).toFixed(5)}
++ 0.48074 × ${X34} = ${(0.48074 * X34).toFixed(5)}
+= ${logitX48.toFixed(5)}
+
+X48 = 1 / (1 + e^(-logitX48)) = ${X48.toFixed(5)}
+`;
 
       stepsOutput.textContent = explanation.trim();
     }
