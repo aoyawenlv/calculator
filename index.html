@@ -29,13 +29,29 @@
       font-size: 1.5em;
     }
     label {
-      display: block;
-      margin-top: 20px;
       font-weight: bold;
     }
     input[type=range] {
       width: 100%;
       margin-top: 5px;
+    }
+    .age-label-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .range-slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85em;
+      color: #666;
+      padding: 0 2px;
     }
     .radio-group {
       display: flex;
@@ -76,8 +92,17 @@
     <div class="input-panel">
       <h2>Input Parameters</h2>
 
-      <label>Age: <span id="ageValue">1</span></label>
-      <input type="range" id="age" min="1" max="100" value="1">
+      <div class="age-label-input">
+        <label for="ageNumber">Age:</label>
+        <input type="number" id="ageNumber" min="30" max="90" value="30">
+      </div>
+      <div class="range-slider-container">
+        <input type="range" id="age" min="30" max="90" value="30">
+        <div class="slider-labels">
+          <span>30</span>
+          <span>90</span>
+        </div>
+      </div>
 
       <label>Smoking:</label>
       <div class="radio-group" id="smokeGroup">
@@ -87,20 +112,20 @@
 
       <label>Type of ETT:</label>
       <div class="radio-group" id="ettGroup">
-        <label class="radio-option active"><input type="radio" name="ett" value="0" checked>SLET</label>
-        <label class="radio-option"><input type="radio" name="ett" value="1">DLET</label>
+        <label class="radio-option active"><input type="radio" name="ett" value="1" checked>SLET</label>
+        <label class="radio-option"><input type="radio" name="ett" value="0">DLET</label>
       </div>
 
       <label>Continuous Anesthesia:</label>
       <div class="radio-group" id="anesthesiaGroup">
-        <label class="radio-option active"><input type="radio" name="anesthesia" value="0" checked>TIIA</label>
+        <label class="radio-option active"><input type="radio" name="anesthesia" value="0" checked>TIVA</label>
         <label class="radio-option"><input type="radio" name="anesthesia" value="1">CIIA</label>
       </div>
 
       <label>Vasoactive Drug Usage:</label>
       <div class="radio-group" id="vasoactiveGroup">
-        <label class="radio-option active"><input type="radio" name="vasoactive" value="0" checked>Yes</label>
-        <label class="radio-option"><input type="radio" name="vasoactive" value="1">No</label>
+        <label class="radio-option active"><input type="radio" name="vasoactive" value="1" checked>Yes</label>
+        <label class="radio-option"><input type="radio" name="vasoactive" value="0">No</label>
       </div>
     </div>
 
@@ -117,7 +142,7 @@
 
   <script>
     const ageSlider = document.getElementById('age');
-    const ageValue = document.getElementById('ageValue');
+    const ageNumber = document.getElementById('ageNumber');
     const output = document.getElementById('finalScore');
     const stepsOutput = document.getElementById('stepsOutput');
 
@@ -144,7 +169,8 @@
       const step6 = 0.48074 * X34;
 
       const score = step1 + step2 + step3 + step4 + step5 + step6;
-      output.textContent = score.toFixed(5);
+      const percentage = Math.max(0, score * 100).toFixed(2) + '%';
+      output.textContent = percentage;
 
       const explanation = `
 -2.67247
@@ -154,7 +180,8 @@
 + 0.69059 × ${X33} = ${step5.toFixed(5)}
 + 0.48074 × ${X34} = ${step6.toFixed(5)}
 = ${score.toFixed(5)}
-`;
+× 100 = ${percentage}`;
+
       stepsOutput.textContent = explanation.trim();
     }
 
@@ -172,14 +199,22 @@
     }
 
     ageSlider.addEventListener('input', () => {
-      ageValue.textContent = ageSlider.value;
+      ageNumber.value = ageSlider.value;
       calculateScore();
+    });
+
+    ageNumber.addEventListener('input', () => {
+      let val = parseInt(ageNumber.value);
+      if (!isNaN(val)) {
+        val = Math.max(30, Math.min(90, val));
+        ageSlider.value = val;
+        calculateScore();
+      }
     });
 
     ['smokeGroup', 'ettGroup', 'anesthesiaGroup', 'vasoactiveGroup'].forEach(setupRadioGroup);
 
     calculateScore();
   </script>
-
 </body>
 </html>
