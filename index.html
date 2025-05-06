@@ -28,6 +28,7 @@
     .output-panel {
       flex: 1;
       font-size: 1em;
+      text-align: center;
     }
     label {
       font-weight: bold;
@@ -46,6 +47,7 @@
       display: flex;
       flex-direction: column;
       align-items: stretch;
+      margin-bottom: 20px;
     }
     .slider-labels {
       display: flex;
@@ -58,6 +60,7 @@
       display: flex;
       gap: 10px;
       margin-top: 5px;
+      margin-bottom: 20px;
     }
     .radio-option {
       padding: 5px 12px;
@@ -75,8 +78,31 @@
       font-weight: bold;
       color: #0047ab;
     }
+    .steps-panel {
+      margin-top: 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 1em;
+    }
+    .steps-panel h3 {
+      margin-bottom: 10px;
+    }
     canvas {
-      max-width: 100%;
+      margin-top: 20px;
+    }
+    .result-heading {
+      font-size: 0.95em;
+      font-weight: normal;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .result-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin-top: 0;
+      text-align: center;
     }
   </style>
 </head>
@@ -123,17 +149,25 @@
     </div>
 
     <div class="output-panel">
-      <h2>Nomogram</h2>
-      <canvas id="nomogramChart"></canvas>
+      <div class="result-heading">The probability of postoperative pneumonia after esophageal cancer surgery is:</div>
+      <div class="result-value" id="finalScore">Waiting for input...</div>
+      <canvas id="nomogramChart" width="400" height="300"></canvas>
     </div>
+  </div>
+
+  <div class="steps-panel">
+    <h3>Calculation Steps:</h3>
+    <pre id="stepsOutput">Waiting for input...</pre>
   </div>
 
   <script>
     const ageSlider = document.getElementById('age');
     const ageNumber = document.getElementById('ageNumber');
-    const ctx = document.getElementById('nomogramChart').getContext('2d');
+    const output = document.getElementById('finalScore');
+    const stepsOutput = document.getElementById('stepsOutput');
+    const chartCanvas = document.getElementById('nomogramChart');
 
-    let nomogramChart;
+    let chart;
 
     function getRadioValue(name) {
       const radios = document.getElementsByName(name);
@@ -143,53 +177,62 @@
       return 0;
     }
 
-    function calculateContributions() {
+    function calculateScore() {
       const X2 = parseInt(ageSlider.value);
       const X7 = getRadioValue('smoke');
       const X32 = getRadioValue('ett');
       const X33 = getRadioValue('anesthesia');
       const X34 = getRadioValue('vasoactive');
 
-      return [
-        { label: 'Age', value: 0.02335 * X2 },
-        { label: 'Smoking', value: 0.78429 * X7 },
-        { label: 'Type of ETT', value: -0.67346 * X32 },
-        { label: 'Anesthesia', value: 0.69059 * X33 },
-        { label: 'Vasoactive', value: 0.48074 * X34 }
-      ];
-    }
+      const step1 = -2.67247;
+      const step2 = 0.02335 * X2;
+      const step3 = 0.78429 * X7;
+      const step4 = -0.67346 * X32;
+      const step5 = 0.69059 * X33;
+      const step6 = 0.48074 * X34;
 
-    function updateChart() {
-      const contributions = calculateContributions();
+      const score = step1 + step2 + step3 + step4 + step5 + step6;
+      const p = 1 / (1 + Math.exp(-score));
+      const percentage = (p * 100).toFixed(2) + '%';
 
-      const labels = contributions.map(c => c.label);
-      const values = contributions.map(c => c.value);
+      output.textContent = percentage;
 
-      if (nomogramChart) {
-        nomogramChart.data.labels = labels;
-        nomogramChart.data.datasets[0].data = values;
-        nomogramChart.update();
-      } else {
-        nomogramChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Contribution to Final Score',
-              data: values,
-              backgroundColor: '#4d90fe'
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            scales: {
-              x: {
-                beginAtZero: true
-              }
+      const explanation = `
+Raw Score:
+-2.67247
++ 0.02335 × ${X2} = ${step2.toFixed(5)}
++ 0.78429 × ${X7} = ${step3.toFixed(5)}
+- 0.67346 × ${X32} = ${step4.toFixed(5)}
++ 0.69059 × ${X33} = ${step5.toFixed(5)}
++ 0.48074 × ${X34} = ${step6.toFixed(5)}
+= ${score.toFixed(5)}
+
+Probability = 1 / (1 + e^(-score)) = ${percentage}
+      `;
+      stepsOutput.textContent = explanation.trim();
+
+      const labels = ['Age', 'Smoking', 'Type of ETT', 'Anesthesia', 'Vasoactive Drug'];
+      const values = [step2, step3, step4, step5, step6];
+
+      if (chart) chart.destroy();
+      chart = new Chart(chartCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Contribution to Score',
+            data: values,
+            backgroundColor: '#4d90fe'
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
             }
           }
-        });
-      }
+        }
+      });
     }
 
     function setupRadioGroup(groupId) {
@@ -200,14 +243,14 @@
           labels.forEach(l => l.classList.remove('active'));
           label.classList.add('active');
           label.querySelector('input').checked = true;
-          updateChart();
+          calculateScore();
         });
       });
     }
 
     ageSlider.addEventListener('input', () => {
       ageNumber.value = ageSlider.value;
-      updateChart();
+      calculateScore();
     });
 
     ageNumber.addEventListener('input', () => {
@@ -215,13 +258,13 @@
       if (!isNaN(val)) {
         val = Math.max(30, Math.min(90, val));
         ageSlider.value = val;
-        updateChart();
+        calculateScore();
       }
     });
 
     ['smokeGroup', 'ettGroup', 'anesthesiaGroup', 'vasoactiveGroup'].forEach(setupRadioGroup);
 
-    updateChart();
+    calculateScore();
   </script>
 </body>
 </html>
